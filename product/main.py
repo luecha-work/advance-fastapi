@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import FastAPI
+from fastapi import FastAPI, status
 from sqlalchemy.sql.functions import mode
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
@@ -50,7 +50,7 @@ def update_product(product_id: int, request: schemas.Product, db: Session = Depe
     return {"message": "Product updated successfully"}
 
 
-@app.post("/product")
+@app.post("/product", status_code=status.HTTP_201_CREATED)
 def create_product(request: schemas.Product, db: Session = Depends(get_db)):
     new_product = models.Product(
         name=request.name, description=request.description, price=request.price)
