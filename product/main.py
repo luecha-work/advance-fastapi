@@ -19,6 +19,36 @@ def get_db():
         db.close()
 
 
+@app.get("/product/{product_id}")
+def get_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(models.Product).filter(
+        models.Product.id == product_id).first()
+    return product
+
+
+@app.get("/product")
+def get_all_products(db: Session = Depends(get_db)):
+    products = db.query(models.Product).all()
+    return products
+
+@app.put("/product/{product_id}")
+def update_product(product_id: int, request: schemas.Product, db: Session = Depends(get_db)):
+    product_query = db.query(models.Product).filter(
+        models.Product.id == product_id)
+    if not product_query.first():
+        return {"error": "Product not found"}
+    
+    # product.name = request.name
+    # product.description = request.description
+    # product.price = request.price
+    # db.commit()
+    # db.refresh(product)
+    
+    product_query.update(request.model_dump())
+    db.commit()
+    return {"message": "Product updated successfully"}
+
+
 @app.post("/product")
 def create_product(request: schemas.Product, db: Session = Depends(get_db)):
     new_product = models.Product(
@@ -26,4 +56,13 @@ def create_product(request: schemas.Product, db: Session = Depends(get_db)):
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
-    return request
+    return new_product
+
+
+@app.delete("/product/{product_id}")
+def delete_product(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(models.Product).filter(
+        models.Product.id == product_id).first()
+    db.delete(product)
+    db.commit()
+    return {"message": "Product deleted successfully"}
