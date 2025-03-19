@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import FastAPI
 from sqlalchemy.sql.functions import mode
 from fastapi.params import Depends
@@ -19,14 +20,14 @@ def get_db():
         db.close()
 
 
-@app.get("/product/{product_id}")
+@app.get("/product/{product_id}", response_model=schemas.DisplayProduct)
 def get_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(
         models.Product.id == product_id).first()
     return product
 
 
-@app.get("/product")
+@app.get("/product", response_model=List[schemas.DisplayProduct])
 def get_all_products(db: Session = Depends(get_db)):
     products = db.query(models.Product).all()
     return products
