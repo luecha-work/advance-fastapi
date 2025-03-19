@@ -1,5 +1,5 @@
 from typing import List
-from fastapi import FastAPI, status
+from fastapi import FastAPI, HTTPException, Response, status
 from sqlalchemy.sql.functions import mode
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
@@ -21,9 +21,12 @@ def get_db():
 
 
 @app.get("/product/{product_id}", response_model=schemas.DisplayProduct)
-def get_product(product_id: int, db: Session = Depends(get_db)):
+def get_product(product_id: int, response: Response, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(
         models.Product.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Product not found")
     return product
 
 
@@ -32,19 +35,20 @@ def get_all_products(db: Session = Depends(get_db)):
     products = db.query(models.Product).all()
     return products
 
+
 @app.put("/product/{product_id}")
 def update_product(product_id: int, request: schemas.Product, db: Session = Depends(get_db)):
     product_query = db.query(models.Product).filter(
         models.Product.id == product_id)
     if not product_query.first():
         return {"error": "Product not found"}
-    
+
     # product.name = request.name
     # product.description = request.description
     # product.price = request.price
     # db.commit()
     # db.refresh(product)
-    
+
     product_query.update(request.model_dump())
     db.commit()
     return {"message": "Product updated successfully"}
