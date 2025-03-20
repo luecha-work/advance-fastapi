@@ -2,3 +2,5 @@ fastapi[standard]
 sqlalchemy
 uvicorn
 pydantic
+passlib
+bcrypt
