@@ -43,12 +43,6 @@ def update_product(product_id: int, request: schemas.Product, db: Session = Depe
     if not product_query.first():
         return {"error": "Product not found"}
 
-    # product.name = request.name
-    # product.description = request.description
-    # product.price = request.price
-    # db.commit()
-    # db.refresh(product)
-
     product_query.update(request.model_dump())
     db.commit()
     return {"message": "Product updated successfully"}
@@ -71,3 +65,13 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     db.delete(product)
     db.commit()
     return {"message": "Product deleted successfully"}
+
+
+@app.post('/seller')
+def create_seller(request: schemas.Seller, db: Session = Depends(get_db)):
+    new_seller = models.Seller(
+        username=request.username, email=request.email, password=request.password)
+    db.add(new_seller)
+    db.commit()
+    db.refresh(new_seller)
+    return new_seller
