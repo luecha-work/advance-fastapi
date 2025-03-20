@@ -1,6 +1,7 @@
-import datetime
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Depends
+from fastapi.security import OAuth2PasswordBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
@@ -15,11 +16,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 20
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 def generate_token(data: dict) -> str:
     payload = data.copy()
-    expire = datetime.utcnow() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload.update({"exp": expire})
     encoded_jwt = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -27,14 +29,30 @@ def generate_token(data: dict) -> str:
 
 @router.post("/login")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(models.Seller).filter(
+    seller = db.query(models.Seller).filter(
         models.Seller.username == request.username).first()
-    if not user:
+    if not seller:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail="Username not found/ invalid user")
 
-    if not pwd_context.verify(request.password, user.password):
+    if not pwd_context.verify(request.password, seller.password):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail="Invalid Password")
     # Gen JWT Token
-    return request
+    access_token = generate_token(data={"sub": seller.username})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    return username
