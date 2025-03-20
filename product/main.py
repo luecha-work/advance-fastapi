@@ -8,7 +8,20 @@ from .import models
 from .database import engine, SessionLocal
 from passlib.context import CryptContext
 
-app = FastAPI()
+app = FastAPI(
+    title="Product API",
+    description="A simple API to manage products and sellers",
+    terms_of_service="http://www.google.com/",
+    contact={
+        "developer Name": "luecha kanmaneekul",
+        "website": "http://www.google.com/",
+        "email": "demo@gmail.com"
+    },
+    license_info={
+        "name": "XYZ License",
+        "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+)
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -23,7 +36,7 @@ def get_db():
         db.close()
 
 
-@app.get("/product/{product_id}", response_model=schemas.DisplayProduct)
+@app.get("/product/{product_id}", response_model=schemas.DisplayProduct, tags=["Products"])
 def get_product(product_id: int, response: Response, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(
         models.Product.id == product_id).first()
@@ -33,13 +46,13 @@ def get_product(product_id: int, response: Response, db: Session = Depends(get_d
     return product
 
 
-@app.get("/product", response_model=List[schemas.DisplayProduct])
+@app.get("/product", response_model=List[schemas.DisplayProduct], tags=["Products"])
 def get_all_products(db: Session = Depends(get_db)):
     products = db.query(models.Product).all()
     return products
 
 
-@app.put("/product/{product_id}")
+@app.put("/product/{product_id}", tags=["Products"])
 def update_product(product_id: int, request: schemas.Product, db: Session = Depends(get_db)):
     product_query = db.query(models.Product).filter(
         models.Product.id == product_id)
@@ -51,7 +64,7 @@ def update_product(product_id: int, request: schemas.Product, db: Session = Depe
     return {"message": "Product updated successfully"}
 
 
-@app.post("/product", status_code=status.HTTP_201_CREATED)
+@app.post("/product", status_code=status.HTTP_201_CREATED, tags=["Products"])
 def create_product(request: schemas.Product, db: Session = Depends(get_db)):
     new_product = models.Product(
         name=request.name, description=request.description, price=request.price, seller_id=request.seller_id)
@@ -61,7 +74,7 @@ def create_product(request: schemas.Product, db: Session = Depends(get_db)):
     return new_product
 
 
-@app.delete("/product/{product_id}")
+@app.delete("/product/{product_id}", tags=["Products"])
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(
         models.Product.id == product_id).first()
@@ -70,7 +83,7 @@ def delete_product(product_id: int, db: Session = Depends(get_db)):
     return {"message": "Product deleted successfully"}
 
 
-@app.post('/seller', response_model=schemas.DisplaySeller)
+@app.post('/seller', response_model=schemas.DisplaySeller, tags=["Sellers"])
 def create_seller(request: schemas.Seller, db: Session = Depends(get_db)):
     hashed_password = pwd_context.hash(request.password)
     new_seller = models.Seller(
@@ -79,4 +92,3 @@ def create_seller(request: schemas.Seller, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_seller)
     return new_seller
-
