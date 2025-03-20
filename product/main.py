@@ -1,7 +1,9 @@
 from fastapi import FastAPI
+
+import api
 from . import models
 from .database import engine
-from routers import product, seller
+from api import router
 
 tags_metadata = [
     {
@@ -30,8 +32,6 @@ app = FastAPI(
     },
     openapi_tags=tags_metadata
 )
-
-app.include_router(product.router)
-app.include_router(seller.router)
+app.include_router(router.api_router)
 
 models.Base.metadata.create_all(bind=engine)

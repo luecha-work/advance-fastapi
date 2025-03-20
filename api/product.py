@@ -5,10 +5,10 @@ from sqlalchemy.orm import Session
 from product import models, schemas
 from product.database import get_db
 
-router = APIRouter( tags=["Products"])
+router = APIRouter(prefix="/product", tags=["Products"])
 
 
-@router.get("/product/{product_id}", response_model=schemas.DisplayProduct, tags=["Products"])
+@router.get("/{product_id}", response_model=schemas.DisplayProduct, tags=["Products"])
 def get_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(
         models.Product.id == product_id).first()
@@ -18,13 +18,13 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     return product
 
 
-@router.get("/product", response_model=List[schemas.DisplayProduct])
+@router.get("/", response_model=List[schemas.DisplayProduct])
 def get_all_products(db: Session = Depends(get_db)):
     products = db.query(models.Product).all()
     return products
 
 
-@router.put("/product/{product_id}", tags=["Products"])
+@router.put("/{product_id}", tags=["Products"])
 def update_product(product_id: int, request: schemas.Product, db: Session = Depends(get_db)):
     product_query = db.query(models.Product).filter(
         models.Product.id == product_id)
@@ -36,7 +36,7 @@ def update_product(product_id: int, request: schemas.Product, db: Session = Depe
     return {"message": "Product updated successfully"}
 
 
-@router.post("/product", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create_product(request: schemas.Product, db: Session = Depends(get_db)):
     new_product = models.Product(
         name=request.name, description=request.description, price=request.price, seller_id=request.seller_id)
@@ -46,7 +46,7 @@ def create_product(request: schemas.Product, db: Session = Depends(get_db)):
     return new_product
 
 
-@router.delete("/product/{product_id}")
+@router.delete("/{product_id}")
 def delete_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(models.Product).filter(
         models.Product.id == product_id).first()

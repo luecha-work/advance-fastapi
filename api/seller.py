@@ -5,12 +5,12 @@ from product import models, schemas
 from product.database import get_db
 from passlib.context import CryptContext
 
-router = APIRouter(tags=["Sellers"])
+router = APIRouter(prefix="/seller",tags=["Sellers"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
-@router.post("/seller", response_model=schemas.DisplaySeller)
+@router.post("/", response_model=schemas.DisplaySeller)
 def create_seller(request: schemas.Seller, db: Session = Depends(get_db)):
     hashed_password = pwd_context.hash(request.password)
     new_seller = models.Seller(
@@ -19,3 +19,11 @@ def create_seller(request: schemas.Seller, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_seller)
     return new_seller
+
+@router.get("/{seller_id}", response_model=schemas.DisplaySeller)
+def get_seller(seller_id: int, db: Session = Depends(get_db)):
+    seller = db.query(models.Seller).filter(
+        models.Seller.id == seller_id).first()
+    if not seller:
+        return {"error": "Seller not found"}
+    return seller
