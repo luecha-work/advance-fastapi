@@ -54,7 +54,7 @@ def update_product(product_id: int, request: schemas.Product, db: Session = Depe
 @app.post("/product", status_code=status.HTTP_201_CREATED)
 def create_product(request: schemas.Product, db: Session = Depends(get_db)):
     new_product = models.Product(
-        name=request.name, description=request.description, price=request.price)
+        name=request.name, description=request.description, price=request.price, seller_id=request.seller_id)
     db.add(new_product)
     db.commit()
     db.refresh(new_product)
