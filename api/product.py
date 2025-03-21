@@ -2,6 +2,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Depends
 from sqlalchemy.orm import Session
+from api.auth import get_current_user
 from product import models, schemas
 from product.database import get_db
 
@@ -9,7 +10,7 @@ router = APIRouter(prefix="/product", tags=["Products"])
 
 
 @router.get("/{product_id}", response_model=schemas.DisplayProduct, tags=["Products"])
-def get_product(product_id: int, db: Session = Depends(get_db)):
+def get_product(product_id: int, db: Session = Depends(get_db), current_user: str = Depends(get_current_user)):
     product = db.query(models.Product).filter(
         models.Product.id == product_id).first()
     if not product:

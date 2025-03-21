@@ -13,6 +13,10 @@ tags_metadata = [
     {
         "name": "Sellers",
         "description": "Endpoints related to sellers"
+    },
+    {
+        "name": "Authentication",
+        "description": "Endpoints related to authentication"
     }
 ]
 

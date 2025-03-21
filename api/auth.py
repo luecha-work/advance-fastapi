@@ -1,11 +1,12 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, status
 from fastapi.params import Depends
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
 from product import models
+from product import schemas
 from product.database import get_db
 from product.schemas import LoginRequest
 
@@ -28,7 +29,7 @@ def generate_token(data: dict) -> str:
 
 
 @router.post("/login")
-def login(request: LoginRequest, db: Session = Depends(get_db)):
+def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     seller = db.query(models.Seller).filter(
         models.Seller.username == request.username).first()
     if not seller:
@@ -42,6 +43,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     access_token = generate_token(data={"sub": seller.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
+
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -53,6 +55,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
+        token_data = schemas.TokenData(username=username)
     except JWTError:
         raise credentials_exception
-    return username
+    # return username
